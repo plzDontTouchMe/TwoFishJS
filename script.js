@@ -1,11 +1,12 @@
 const fs = require('fs');
 class TwoFish{
-    #text;
-    #key;
     arrayKeys = [];
-    constructor(text, key) {
-        this.#text = text;
-        this.#key = key;
+    k = 7;
+    constructor(key) {
+        this.generationSubKeys(key);
+    }
+    generationSubKeys(key){
+
     }
     getByteByText(text, degree){
         let temp = '';
@@ -29,17 +30,10 @@ class TwoFish{
         }
         return temp;
     }
-    generateSubKeys(){
-        console.log(this.#key)
-    }
-    splitDataBlock(text){
-        console.log(text);
-    }
-    encode(){
-        this.generateSubKeys();
+    encode(text){
         let arrayDataBlock = [];
-        for(let i = 0; i < this.#text.length; i+=16){
-            arrayDataBlock.push(this.#text.slice(i, i + 16));
+        for(let i = 0; i < text.length; i+=16){
+            arrayDataBlock.push(text.slice(i, i + 16));
         }
         for(let i = 0; i < arrayDataBlock.length; i++){
             let temp = '';
@@ -50,8 +44,11 @@ class TwoFish{
             this.splitDataBlock(temp);
         }
     }
+    splitDataBlock(text){
+
+    }
 }
 const text = fs.readFileSync("text.txt", "ascii");
 const key = fs.readFileSync("key.txt", "ascii");
-const twoFish = new TwoFish(text, key);
-twoFish.encode();
+const twoFish = new TwoFish(key);
+twoFish.encode(text);
