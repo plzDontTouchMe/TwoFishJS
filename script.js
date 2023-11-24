@@ -1,12 +1,30 @@
 const fs = require('fs');
 class TwoFish{
-    arrayKeys = [];
-    k = 7;
-    constructor(key) {
+    #arrayKeys = [];
+    #key;
+    #k;
+    #r = 20;
+    constructor(key, k) {
+        this.#k = k;
+        this.#key = key
         this.generationSubKeys(key);
     }
     generationSubKeys(key){
+        let M_e = '';
+        let M_0 = '';
+        for (let i = 0; i < key.length; i += 8) {
+            M_e += this.getByteByText(key.charCodeAt(i), 8) + this.getByteByText(key.charCodeAt(i + 1), 8) + this.getByteByText(key.charCodeAt(i + 2), 8) + this.getByteByText(key.charCodeAt(i + 3), 8);
+            M_0 += this.getByteByText(key.charCodeAt(i + 4), 8) + this.getByteByText(key.charCodeAt(i + 5), 8) + this.getByteByText(key.charCodeAt(i + 6), 8) + this.getByteByText(key.charCodeAt(i + 7), 8);
+        }
+        for (let i = 0, p = Math.pow(2, 24) + Math.pow(2, 16) + Math.pow(2, 8) + 1; i < this.#r; i++){ //2^25
+            let A = this.h(2 * i * p, M_e); //2^30
+            //let B = this.ROL(this.h((2 * i + 1) * p, M_0), 8);
+        }
+    }
+    h(value, subKeyByte){
+        for (let i = 0; i < parseFloat(subKeyByte.length) / 64 * 2; i++){
 
+        }
     }
     getByteByText(text, degree){
         let temp = '';
@@ -49,6 +67,7 @@ class TwoFish{
     }
 }
 const text = fs.readFileSync("text.txt", "ascii");
-const key = fs.readFileSync("key.txt", "ascii");
-const twoFish = new TwoFish(key);
+const key = fs.readFileSync("key.txt", "ascii").toString().split('\n')[0].slice(0, -1);
+const k = fs.readFileSync("key.txt", "ascii").toString().split('\n')[1];
+const twoFish = new TwoFish(key, k);
 twoFish.encode(text);
