@@ -3,7 +3,7 @@ class TwoFish{
     #arrayKeys = [];
     #key;
     #k;
-    #r = 20;
+    #r = 16;
     constructor(key, k) {
         this.#k = k;
         this.#key = key
