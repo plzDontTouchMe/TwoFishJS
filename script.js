@@ -22,8 +22,12 @@ class TwoFish{
         }
     }
     h(value, subKeyByte){
-        for (let i = 0; i < parseFloat(subKeyByte.length) / 64 * 2; i++){
-
+        let count = parseFloat(subKeyByte.length) / 64 * 2;
+        let tempArray = new Array(count + 1);
+        for(let i = 0; i < tempArray.length; i++){
+            //tempArray[i] =
+        }
+        for (let i = 0; i < count; i++){
         }
     }
     getByteByText(text, degree){
