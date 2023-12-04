@@ -259,6 +259,7 @@ class TwoFish{
                 for(let j = 0; j < 4; j++){
                     tempArray[j] = this.getValueByByte(qByte.slice(j * 8, (j + 1) * 8), 8);
                     tempArray[j] = (tempArray[j] * this.#a + this.#b) % this.#n;
+                    //tempArray[j] = ((tempArray[j] - this.#b) * Math.ceil(this.#n / 2)) % this.#n;
                 }
                 let result = '';
                 for(let j = 0; j < 4; j++){
