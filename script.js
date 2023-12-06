@@ -2,7 +2,7 @@ const fs = require('fs');
 class TwoFish{
     #key;
     #k;
-    #r = 1;
+    #r = 16;
     #arraySubKeys = new Array(40);
     #q0 = [
         [ 8, 1, 7, 13, 6, 15, 3, 2, 0, 11, 5, 9, 14, 12, 10, 4 ],
@@ -36,13 +36,24 @@ class TwoFish{
         [ 164, 85, 135, 90, 88, 219, 158, 3 ]
     ]
     #S = [];
-    #a = 2;
-    #b = 7;
-    #n = 251;
     constructor(key, k) {
-        this.#k = k;
+        if(k < 0){
+            this.#k = 7;
+        }
+        else {
+            this.#k = k;
+        }
         if(key.length > 32){
             key = key.slice(0, 32);
+        }
+        else if(key.length < 16){
+            key += ' '.repeat(16 - key.length)
+        }
+        else if(key.length > 16){
+            key += ' '.repeat(24 - key.length)
+        }
+        else if(key.length > 24){
+            key += ' '.repeat(32 - key.length)
         }
         this.#key = key;
         this.generationSubKeys(key);
@@ -52,7 +63,6 @@ class TwoFish{
                 this.#q.shift();
             }
         }
-        this.#arraySubKeys;
     }
     generationSubKeys(key){
         let M_e = [];
@@ -123,15 +133,15 @@ class TwoFish{
         return result;
     }
     permutation(x, qTable){
-        let value = this.getValueByByte(x, 8); //74
-        let a0 = value / 16;
-        let b0 = value % 16;
+        let value = this.getValueByByte(x, 8);
+        let a0 = this.getValueByByte(this.getByteByValue(value, 8).slice(0, 4), 4);
+        let b0 =  this.getValueByByte(this.getByteByValue(value, 8).slice(4, 8), 4);
         let a1 = a0 ^ b0;
-        let b1 = a0 ^ this.getValueByByte((this.getByteByValue(b0))) ^ ((8 * a0) % 16);
+        let b1 = a0 ^ this.getValueByByte(this.ROR((this.getByteByValue(b0, 4)), 1), 4) ^ ((8 * a0) % 16);
         let a2 = qTable[0][a1];
         let b2 = qTable[1][b1];
         let a3 = a2 ^ b2;
-        let b3 = a2 ^ this.getValueByByte((this.getByteByValue(b2))) ^ ((8 * a2) % 16);
+        let b3 = a2 ^ this.getValueByByte(this.ROR((this.getByteByValue(b2, 4)), 1), 4) ^ ((8 * a2) % 16);
         let a4 = qTable[2][a3];
         let b4 = qTable[3][b3];
         return 16 * b4 + a4;
@@ -143,6 +153,13 @@ class TwoFish{
     ROL(byte, shiftCount){
         byte = byte.slice(shiftCount, byte.length) + byte.slice(0, shiftCount)
         return byte;
+    }
+    XOR(value1, value2, length){
+        let res = '';
+        for(let i = 0; i < length; i++){
+            res += value1[i] ^ value2[i]
+        }
+        return res;
     }
     getByteByValue(text, degree){
         let temp = '';
@@ -172,6 +189,7 @@ class TwoFish{
         for(let i = 0; i < text.length; i+=16){
             arrayDataBlock.push(text.slice(i, i + 16));
         }
+        arrayDataBlock[arrayDataBlock.length - 1] += ' '.repeat(16 - arrayDataBlock[arrayDataBlock.length - 1].length);
         for(let i = 0; i < arrayDataBlock.length; i++){
             let temp = '';
             for(let j = 0; j < arrayDataBlock[i].length; j++){
@@ -191,11 +209,44 @@ class TwoFish{
             temp = this.outputWhitening(temp);
             for(let j = 0; j < 4; j++){
                 for(let k = 0; k < 4; k++){
-                    encodeText += String.fromCharCode(this.getValueByByte(temp[j].slice(k, k + 8), 8));
+                    encodeText += String.fromCharCode(this.getValueByByte(temp[j].slice(k * 8, (k + 1) * 8), 8));
                 }
             }
+
         }
         return encodeText;
+    }
+    decode(text){
+        let decodeText = '';
+        let arrayDataBlock = [];
+        for(let i = 0; i < text.length; i+=16){
+            arrayDataBlock.push(text.slice(i, i + 16));
+        }
+        for(let i = 0; i < arrayDataBlock.length; i++){
+            let temp = '';
+            for(let j = 0; j < arrayDataBlock[i].length; j++){
+                temp += this.getByteByValue(arrayDataBlock[i].charCodeAt(j), 8);
+            }
+            temp = this.splitDataBlock(temp);
+            temp = this.outputWhitening(temp);
+            let cup = temp[0];
+            temp[0] = temp[2];
+            temp[2] = cup;
+            cup = temp[1];
+            temp[1] = temp[3];
+            temp[3] = cup;
+            for(let j = this.#r - 1; j >= 0; j--){
+                temp = this.oneRoundReverse(temp, j);
+            }
+            temp = this.inputWhitening(temp);
+            for(let j = 0; j < 4; j++){
+                for(let k = 0; k < 4; k++){
+                    decodeText += String.fromCharCode(this.getValueByByte(temp[j].slice(k * 8, (k + 1) * 8), 8));
+                }
+            }
+
+        }
+        return decodeText;
     }
     splitDataBlock(text){
         let tempArray = [];
@@ -225,12 +276,11 @@ class TwoFish{
         return tempArray;
     }
     f(r0, r1, round){
-        r1 = this.ROL(r1, 8);
         let t0 = this.g(r0, this.#S);
         let t1 = this.g(r1, this.#S);
         let temp = this.PHT(t0, t1);
-        temp[0] = this.getByteByValue(((this.getValueByByte(temp[0], 32) + this.getValueByByte(this.#arraySubKeys[2 * round + 8], 32)) % 2**32), 32);
-        temp[1] = this.getByteByValue(((this.getValueByByte(temp[1], 32) + this.getValueByByte(this.#arraySubKeys[2 * round + 9], 32)) % 2**32), 32);
+        temp[0] = (temp[0] + this.getValueByByte(this.#arraySubKeys[2 * round + 8], 32)) % 2**32;
+        temp[0] = (temp[1] + this.getValueByByte(this.#arraySubKeys[2 * round + 9], 32)) % 2**32;
         return temp;
     }
     g(value, subKeyByte){
@@ -246,9 +296,8 @@ class TwoFish{
                 let tempArray = new Array(4);
                 for(let j = 0; j < 4; j++){
                     tempArray[j] = this.getValueByByte(qByte.slice(j * 8, (j + 1) * 8), 8);
-                    tempArray[j] = (tempArray[j] * this.#a + this.#b) % this.#n;
-                    //tempArray[j] = ((tempArray[j] - this.#b) * Math.ceil(this.#n / 2)) % this.#n;
                 }
+                tempArray = this.multiplyVectorByMatrix(tempArray, this.#MDS);
                 let result = '';
                 for(let j = 0; j < 4; j++){
                     result += this.getByteByValue(tempArray[j], 8);
@@ -262,79 +311,39 @@ class TwoFish{
         }
     }
     PHT(a, b){
-        let tempA = (2 * this.getValueByByte(a, 32) + this.getValueByByte(b, 32)) % 2**32;
-        let tempB = (this.getValueByByte(a, 32) + this.getValueByByte(b, 32)) % 2**32;
-        return [this.getByteByValue(tempA, 32), this.getByteByValue(tempB, 32)];
+        let tempA = (this.getValueByByte(a, 32) + this.getValueByByte(b, 32)) % 2**32;
+        let tempB = (this.getValueByByte(a, 32) + 2 * this.getValueByByte(b, 32)) % 2**32;
+        return [tempA, tempB];
     }
-    oneRound(temp, round){
-        let f = this.f(temp[0], temp[1], round);
+    oneRound(roundArray, round) {
+        let tempRA1 = roundArray[1];
+        tempRA1 = this.ROL(tempRA1, 8);
+        let f = this.f(roundArray[0], tempRA1, round);
         let c2 = '', c3 = '';
-        temp[3] = this.ROL(temp[3], 1);
-        for(let k = 0; k < 32; k++){
-            c2 += f[0][k] ^ temp[2][k];
-            c3 += f[1][k] ^ temp[3][k];
-        }
+        roundArray[3] = this.ROL(roundArray[3], 1);
+        c2 = this.XOR(this.getByteByValue(f[0], 32), roundArray[2], 32);
+        c3 = this.XOR(this.getByteByValue(f[1], 32), roundArray[3], 32);
         c2 = this.ROR(c2, 1);
-        temp[2] = temp[0];
-        temp[3] = temp[1];
-        temp[0] = c2;
-        temp[1] = c3;
-        return temp;
+        roundArray[3] = roundArray[1];
+        roundArray[2] = roundArray[0];
+        roundArray[1] = c3;
+        roundArray[0] = c2;
+        return roundArray;
     }
-    fReserve(r0, r1, round){
-        r1 = this.ROL(r1, 8);
-        let t0 = this.g(r0, this.#S);
-        let t1 = this.g(r1, this.#S);
-        let temp = this.PHT(t0, t1);
-        temp[0] = this.getByteByValue(((this.getValueByByte(temp[0], 32) + this.getValueByByte(this.#arraySubKeys[2 * round + 8], 32)) % 2**32), 32);
-        temp[1] = this.getByteByValue(((this.getValueByByte(temp[1], 32) + this.getValueByByte(this.#arraySubKeys[2 * round + 9], 32)) % 2**32), 32);
-        return temp;
-    }
-    oneRoundReserve(temp, round){
-        let f = this.f(temp[2], temp[3], round);
+    oneRoundReverse(roundArray, round) {
+        let tempRA3 = roundArray[3];
+        tempRA3 = this.ROL(tempRA3, 8);
+        let f = this.f(roundArray[2], tempRA3, round);
         let c2 = '', c3 = '';
-        temp[0] = this.ROL(temp[0], 1);
-        for(let k = 0; k < 32; k++){
-            c2 += f[0][k] ^ temp[0][k];
-            c3 += f[1][k] ^ temp[1][k];
-        }
-        c3 = this.ROR(c2, 1);
-        temp[2] = temp[0];
-        temp[3] = temp[1];
-        temp[0] = c2;
-        temp[1] = c3;
-        return temp
-    }
-    decode(text){
-        let decodeText = '';
-        let arrayDataBlock = [];
-        for(let i = 0; i < text.length; i+=16){
-            arrayDataBlock.push(text.slice(i, i + 16));
-        }
-        for(let i = 0; i < arrayDataBlock.length; i++){
-            let temp = '';
-            for(let j = 0; j < arrayDataBlock[i].length; j++){
-                temp += this.getByteByValue(arrayDataBlock[i].charCodeAt(j), 8);
-            }
-            temp = this.splitDataBlock(temp);
-            temp = this.outputWhitening(temp);
-            let cup = temp[0];
-            temp[0] = temp[2];
-            temp[2] = cup;
-            cup = temp[1];
-            temp[1] = temp[3];
-            temp[3] = cup;
-            for(let j = this.#r - 1; j >= 0; j--){
-                temp = this.oneRoundReserve(temp, j);
-            }
-            temp = this.inputWhitening(temp);
-            for(let j = 0; j < 4; j++){
-                for(let k = 0; k < 4; k++){
-                    decodeText += String.fromCharCode(this.getValueByByte(temp[j].slice(k, k + 8), 8));
-                }
-            }
-        }
-        return decodeText;
+        roundArray[0] = this.ROL(roundArray[0], 1);
+        c2 = this.XOR(this.getByteByValue(f[0], 32), roundArray[0], 32);
+        c3 = this.XOR(this.getByteByValue(f[1], 32), roundArray[1], 32);
+        c3 = this.ROR(c3, 1);
+        roundArray[0] = roundArray[2];
+        roundArray[1] = roundArray[3];
+        roundArray[2] = c2;
+        roundArray[3] = c3;
+        return roundArray;
     }
 }
 const text = fs.readFileSync("text.txt", "ascii");
@@ -342,8 +351,6 @@ const key = fs.readFileSync("key.txt", "ascii").toString().split('\n')[0].slice(
 const k = fs.readFileSync("key.txt", "ascii").toString().split('\n')[1];
 const twoFish = new TwoFish(key, k);
 let encodeText = twoFish.encode(text);
-//console.log(encodeText);
+console.log(encodeText);
 let decodeText = twoFish.decode(encodeText);
-//console.log(decodeText);
-
-console.log(twoFish.oneRound(['01001101011111001101101001010110', '01011100010000000101010001111101', '01101010100100000110100011101100', '11100101001111100010011100111100'], 1))
+console.log(decodeText);
