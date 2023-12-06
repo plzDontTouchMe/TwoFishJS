@@ -1,7 +1,8 @@
-const fs = require('fs');
+//const fs = require('fs');
 class TwoFish{
     #key;
     #k;
+    #vectorInit;
     #r = 16;
     #arraySubKeys = new Array(40);
     #q0 = [
@@ -36,7 +37,7 @@ class TwoFish{
         [ 164, 85, 135, 90, 88, 219, 158, 3 ]
     ]
     #S = [];
-    constructor(key, k) {
+    constructor(key, k, vectorInit = 7777777) {
         if(k < 0){
             this.#k = 7;
         }
@@ -56,6 +57,7 @@ class TwoFish{
             key += ' '.repeat(32 - key.length)
         }
         this.#key = key;
+        this.#vectorInit = this.getByteByValue(vectorInit, 32);
         this.generationSubKeys(key);
         if(this.#key.length <= 24){
             this.#q.shift();
@@ -235,7 +237,7 @@ class TwoFish{
             cup = temp[1];
             temp[1] = temp[3];
             temp[3] = cup;
-            for(let j = this.#r - 1; j >= 0; j--){
+            for(let j = this.#r - 1; j >= 0; j--) {
                 temp = this.oneRoundReverse(temp, j);
             }
             temp = this.inputWhitening(temp);
@@ -346,11 +348,141 @@ class TwoFish{
         return roundArray;
     }
 }
-const text = fs.readFileSync("text.txt", "ascii");
-const key = fs.readFileSync("key.txt", "ascii").toString().split('\n')[0].slice(0, -1);
-const k = fs.readFileSync("key.txt", "ascii").toString().split('\n')[1];
-const twoFish = new TwoFish(key, k);
-let encodeText = twoFish.encode(text);
-console.log(encodeText);
-let decodeText = twoFish.decode(encodeText);
-console.log(decodeText);
+function switchTextEncode(){
+    let checkbox = document.getElementById('checkboxTextEncode');
+    let text = document.getElementById('textEncode');
+    if(checkbox.checked) text.readOnly = true;
+    else text.readOnly = false;
+}
+function switchKeyEncode(){
+    let checkbox = document.getElementById('checkboxKeyEncode');
+    let text = document.getElementById('keyEncode');
+    if(checkbox.checked) text.readOnly = true;
+    else text.readOnly = false;
+}
+function switchTextDecode(){
+    let checkbox = document.getElementById('checkboxTextDecode');
+    let text = document.getElementById('textDecode');
+    if(checkbox.checked) text.readOnly = true;
+    else text.readOnly = false;
+}
+function switchKeyDecode(){
+    let checkbox = document.getElementById('checkboxKeyDecode');
+    let text = document.getElementById('keyDecode');
+    if(checkbox.checked) text.readOnly = true;
+    else text.readOnly = false;
+}
+var fileTextEncode = '';
+var fileKeyEncode = '';
+var fileTextDecode = '';
+var fileKeyDecode = '';
+function setFileTextEncode(array){
+    let file = array.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function() {
+        console.log('Файла загружен');
+        fileTextEncode = reader.result;
+    };
+    reader.onerror = function() {
+        console.log(reader.error);
+    };
+}
+function setFileKeyEncode(array){
+    let file = array.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function() {
+        console.log('Файла загружен');
+        fileKeyEncode = reader.result;
+    };
+    reader.onerror = function() {
+        console.log(reader.error);
+    };
+}
+function setFileTextDecode(array){
+    let file = array.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function() {
+        console.log('Файла загружен');
+        fileTextDecode = reader.result;
+    };
+    reader.onerror = function() {
+        console.log(reader.error);
+    };
+}
+function setFileKeyDecode(array){
+    let file = array.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function() {
+        console.log('Файла загружен');
+        fileKeyDecode = reader.result;
+    };
+    reader.onerror = function() {
+        console.log(reader.error);
+    };
+}
+function startEncode(){
+    let checkboxText = document.getElementById('checkboxTextEncode');
+    let inputText = document.getElementById('textEncode');
+    let text;
+    if(checkboxText.checked){
+        text = fileTextEncode;
+    }
+    else{
+        text = inputText.value;
+    }
+    let checkboxKey = document.getElementById('checkboxKeyEncode');
+    let inputKey = document.getElementById('keyEncode');
+    let key;
+    if(checkboxKey.checked){
+        key = fileKeyEncode;
+    }
+    else{
+        key = inputKey.value;
+    }
+    console.log('TEXT:' + text);
+    console.log('KEY: ' + key);
+    let twoFish = new TwoFish(key);
+    let encodeText = twoFish.encode(text);
+    console.log(encodeText);
+    let inputTextDecode = document.getElementById('textDecode');
+    inputTextDecode.value = encodeText;
+}
+function startDecode(){
+    let checkboxText = document.getElementById('checkboxTextDecode');
+    let inputText = document.getElementById('textDecode');
+    let text;
+    if(checkboxText.checked){
+        text = fileTextDecode;
+    }
+    else{
+        text = inputText.value;
+    }
+    let checkboxKey = document.getElementById('checkboxKeyDecode');
+    let inputKey = document.getElementById('keyDecode');
+    let key;
+    if(checkboxKey.checked){
+        key = fileKeyDecode;
+    }
+    else{
+        key = inputKey.value;
+    }
+    console.log('TEXT:' + text);
+    console.log('KEY: ' + key);
+    let twoFish = new TwoFish(key);
+    let decodeText = twoFish.decode(text);
+    console.log(decodeText);
+    let inputTextEncode = document.getElementById('textEncode');
+    inputTextEncode.value = decodeText;
+}
+//const text = fs.readFileSync("text.txt", "ascii");
+//const key = fs.readFileSync("key.txt", "ascii").toString().split('\n')[0].slice(0, -1);
+//const k = fs.readFileSync("key.txt", "ascii").toString().split('\n')[1];
+//const twoFish = new TwoFish(key, k);
+//let encodeText = twoFish.encode(text);
+//console.log(encodeText);
+//let decodeText = twoFish.decode(encodeText);
+//console.log(decodeText);

@@ -1,0 +1,86 @@
+*{
+    padding: 0;
+    margin: 0;
+}
+.wrap{
+    display: flex;
+    justify-content: space-between;
+}
+.wrapEncode{
+    margin: 40px;
+    margin-top: 10px;
+    height: 90vh;
+    width: 40vw;
+}
+.wrapDecode{
+    margin: 40px;
+    margin-top: 10px;
+    height: 90vh;
+    width: 40vw;
+}
+.encode{
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.decode{
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.text{
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+.textHelp{
+    text-align: center;
+    font-size: 24px;
+    margin: 10px 10px 0 10px;
+}
+.input{
+    padding: 10px;
+    font-size: 20px;
+    margin: 10px 30px 30px 30px;
+    height: 25vh;
+    border-radius: 10px;
+    border: 1px solid black;
+    wrap: soft;
+}
+.input:read-only {
+background: #888b8d;
+}
+.wrapCheckbox{
+    margin-left: 30px;
+}
+.checkbox{
+    width: 20px;
+    height: 20px;
+}
+.checkboxText{
+    font-size: 24px;
+}
+.file{
+    float: right;
+}
+.button{
+    align-self: center;
+    margin-top: 40px;
+    font-size: 24px;
+    background: gray;
+    width: 200px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+}
+.button:hover{
+    cursor: pointer;
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TwoFish</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrap">
+        <div class="wrapEncode">
+            <div class="text">Шифрование</div>
+            <div class="encode">
+                <div class="textHelp">Введите сообщение</div>
+                <textarea class="input" id="textEncode"></textarea>
+                <div class="wrapCheckbox">
+                    <input class='checkbox' type="checkbox" id="checkboxTextEncode" onclick="switchTextEncode()">
+                    <label class="checkboxText" for="checkboxTextEncode">Загрузка из файла</label>
+                    <input class="file" type="file" id="fileTextEncode" onchange="setFileTextEncode(this)">
+                </div>
+                <div class="textHelp">Введите ключ</div>
+                <textarea class="input" type="text" id="keyEncode"></textarea>
+                <div class="wrapCheckbox">
+                    <input class='checkbox' type="checkbox" id="checkboxKeyEncode" onclick="switchKeyEncode()">
+                    <label class="checkboxText" for="checkboxKeyEncode">Загрузка из файла</label>
+                    <input class="file" type="file" id="fileKeyEncode" onchange="setFileKeyEncode(this)">
+                </div>
+                <div class="button" id="buttonEncode" onclick="startEncode()">Зашифровать</div>
+            </div>
+        </div>
+        <div class="wrapDecode">
+            <div class="text">Расшифрование</div>
+            <div class="decode">
+                <div class="textHelp">Введите сообщение</div>
+                <textarea class="input" id="textDecode"></textarea>
+                <div class="wrapCheckbox">
+                    <input class='checkbox' type="checkbox" id="checkboxTextDecode" onclick="switchTextDecode()">
+                    <label class="checkboxText" for="checkboxTextDecode">Загрузка из файла</label>
+                    <input class="file" type="file" id="fileTextDecode" onchange="setFileTextDecode(this)">
+                </div>
+                <div class="textHelp">Введите ключ</div>
+                <textarea class="input" type="text" id="keyDecode"></textarea>
+                <div class="wrapCheckbox">
+                    <input class='checkbox' type="checkbox" id="checkboxKeyDecode" onclick="switchKeyDecode()">
+                    <label class="checkboxText" for="checkboxKeyDecode">Загрузка из файла</label>
+                    <input class="file" type="file" id="fileKeyDecode" onchange="setFileKeyDecode(this)">
+                </div>
+                <div class="button" id="buttonDecode" onclick="startDecode()">Расшифровать</div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
