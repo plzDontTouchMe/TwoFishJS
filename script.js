@@ -1,9 +1,37 @@
 //const fs = require('fs');
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+function getByteByValue(text, degree){
+    let temp = '';
+    for(let i = Math.pow(2, degree - 1); i >= 1; i /= 2){
+        if(text - i >= 0){
+            temp += '1';
+            text -= i;
+        }
+        else {
+            temp += '0';
+        }
+    }
+    return temp;
+}
+function getValueByByte(text, degree){
+    let temp = 0;
+    let index = 0;
+    for(let i = Math.pow(2, degree - 1); i >= 1; i /= 2){
+        temp += text[index] === '1' ? i : 0;
+        index++;
+    }
+    return temp;
+}
+var link = '000110011111111100110000001001010001100111111111001100000010010';
+var vectorInit = '10101011000010010000011101100100101010110000100100000111011001001010101100001001000001110110010010101011000010010000011101100100';
+//Hello, its TwhFish in CFB mode implemented by Dmitry Khomyakov from the O-20-PRI-rps-b group.
 class TwoFish{
     #key;
-    #k;
-    #vectorInit;
+    #k = 0;
     #r = 16;
+    #gamma = '';
     #arraySubKeys = new Array(40);
     #q0 = [
         [ 8, 1, 7, 13, 6, 15, 3, 2, 0, 11, 5, 9, 14, 12, 10, 4 ],
@@ -37,8 +65,8 @@ class TwoFish{
         [ 164, 85, 135, 90, 88, 219, 158, 3 ]
     ]
     #S = [];
-    constructor(key, k, vectorInit = 7777777) {
-        if(k < 0){
+    constructor(key, k, vectorInit) {
+        if(k < 2){
             this.#k = 7;
         }
         else {
@@ -57,7 +85,6 @@ class TwoFish{
             key += ' '.repeat(32 - key.length)
         }
         this.#key = key;
-        this.#vectorInit = this.getByteByValue(vectorInit, 32);
         this.generationSubKeys(key);
         if(this.#key.length <= 24){
             this.#q.shift();
@@ -155,6 +182,9 @@ class TwoFish{
     ROL(byte, shiftCount){
         byte = byte.slice(shiftCount, byte.length) + byte.slice(0, shiftCount)
         return byte;
+    }
+    getRandomInt(max) {
+        return Math.floor(Math.random() * max);
     }
     XOR(value1, value2, length){
         let res = '';
@@ -347,6 +377,138 @@ class TwoFish{
         roundArray[3] = c3;
         return roundArray;
     }
+    getNewByte(textByte){
+        let temp = textByte.slice(textByte.length - link.length,textByte.length);
+        let res = '';
+        for(let i = 0; i < temp.length; i++){
+            if(link[i] == 1) res += temp[i];
+        }
+        let resultByte = '0';
+        for(let i = 0; i < res.length; i++){
+            resultByte = resultByte ^ res[i];
+        }
+        return resultByte;
+    }
+    shiftRegister(textByte){
+        let temp = '';
+        for(let i = 0; i < 128; i++){
+            let newByte = this.getNewByte(textByte);
+            textByte = textByte.slice(1, textByte.length) + newByte;
+            temp += newByte;
+        }
+        return temp;
+    }
+    CFB(text, arrayByte, type){
+        let newBlockByte = this.shiftRegister(arrayByte);
+        let symbols = '';
+        for(let i = 0 ; i < newBlockByte.length; i+=8){
+            symbols += String.fromCharCode(this.getValueByByte(newBlockByte.slice(i, i + 8), 8));
+        }
+        symbols = this.encode(symbols);
+        let sybmolsByte = '';
+        for(let i = 0; i < symbols.length; i++){
+            sybmolsByte += this.getByteByValue(symbols.charCodeAt(i), 8);
+        }
+        let kByte = sybmolsByte.slice(0, this.#k);
+        let textByte = '';
+        for(let i = 0; i < text.length; i++){
+            textByte += this.getByteByValue(text.charCodeAt(i), 8);
+        }
+        console.log('Начало: ' + textByte);
+        textByte = textByte.slice(this.#gamma.length, this.#gamma.length + this.#k);
+        let tempGamma = '';
+        for(let i = 0; i < this.#k; i++){
+            tempGamma += kByte[i] ^ textByte[i]
+        }
+        this.#gamma += tempGamma;
+        if(type === 1){
+            arrayByte = arrayByte.slice(this.#k, arrayByte.length) + tempGamma;
+        }
+        else{
+            arrayByte = arrayByte.slice(this.#k, arrayByte.length) + textByte;
+        }
+        let res;
+        if((this.#gamma.length / 8) < text.length){
+            res = this.CFB(text, arrayByte, type);
+        }
+        else{
+            let result = '';
+            for(let i = 0 ; i < this.#gamma.length; i+=8){
+                result += String.fromCharCode(this.getValueByByte(this.#gamma.slice(i, i + 8), 8));
+            }
+            console.log('Конец: ' + this.#gamma);
+            this.#gamma = '';
+            return result;
+        }
+        return res;
+    }
+}
+function CFBEncode(){
+    let checkboxText = document.getElementById('checkboxTextEncode');
+    let inputText = document.getElementById('textEncode');
+    let text;
+    if(checkboxText.checked){
+        text = fileTextEncode;
+    }
+    else{
+        text = inputText.value;
+    }
+    let checkboxKey = document.getElementById('checkboxKeyEncode');
+    let inputKey = document.getElementById('keyEncode');
+    let key;
+    let k = 0;
+    if(checkboxKey.checked){
+        key = fileKeyEncode;
+    }
+    else{
+        key = inputKey.value;
+    }
+    k = parseInt(document.getElementById('numberEncode').value);
+    console.log('TEXT:' + text);
+    console.log('KEY: ' + key);
+    console.log('K: ' + k)
+    /*let value = getRandomInt(2**32);
+    link = getByteByValue(value, 32).repeat(4);
+    link = link.slice(0, k - 1);
+    value = getRandomInt(2**32);
+    vectorInit = getByteByValue(value, 32).repeat(4);
+    console.log(vectorInit);
+    console.log(link);*/
+    let twoFish = new TwoFish(key, k);
+    let encodeText = twoFish.CFB(text, vectorInit, 1);
+    console.log(encodeText);
+    let inputTextDecode = document.getElementById('textDecode');
+    inputTextDecode.value = encodeText;
+}
+function CFBDecode(){
+    let checkboxText = document.getElementById('checkboxTextDecode');
+    let inputText = document.getElementById('textDecode');
+    let text;
+    if(checkboxText.checked){
+        text = fileTextDecode;
+    }
+    else{
+        text = inputText.value;
+    }
+    let checkboxKey = document.getElementById('checkboxKeyDecode');
+    let inputKey = document.getElementById('keyDecode');
+    let key;
+    let k = 0;
+    if(checkboxKey.checked){
+        key = fileKeyDecode;
+    }
+    else{
+        key = inputKey.value;
+    }
+    k = parseInt(document.getElementById('numberDecode').value);
+    console.log('TEXT:' + text);
+    console.log('KEY: ' + key);
+    console.log('K: ' + k)
+    let twoFish = new TwoFish(key, k);
+    let decodeText = twoFish.CFB(text, vectorInit, 0);
+    console.log(decodeText);
+    let inputTextEncode = document.getElementById('textEncode');
+    inputTextEncode.value = decodeText;
 }
 function switchTextEncode(){
     let checkbox = document.getElementById('checkboxTextEncode');
